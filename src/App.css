@@ -1,6 +1,29 @@
-#root {
+/* #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
-}
+} */
+ body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+        }
+        
+        .custom-back-button {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            padding: 10px 20px;
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .content {
+            margin-top: 60px;
+        }

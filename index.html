@@ -9,5 +9,31 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+        const tg = window.Telegram.WebApp;
+       tg.MainButton.text = "Підтвердити";
+        tg.MainButton.color = "#2481cc";
+        tg.MainButton.show();
+        
+        tg.MainButton.onClick(() => {
+            tg.sendData(JSON.stringify({
+                message: "Дані відправлено"
+            }));
+        });
+        
+        // Власна кнопка "Назад"
+        document.getElementById('backBtn').addEventListener('click', () => {
+            tg.close();
+        });
+        
+        // Якщо BackButton підтримується, використати його замість власної кнопки
+        if (tg.BackButton) {
+            document.getElementById('backBtn').style.display = 'none';
+            tg.BackButton.show();
+            tg.BackButton.onClick(() => {
+                tg.close();
+            });
+        }
+    </script>
   </body>
 </html>

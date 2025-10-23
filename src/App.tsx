@@ -84,14 +84,14 @@ fetch(baseUrl , {
         (ID: {tg.initDataUnsafe?.user?.id})
       </p>
       <div className="form">
-        <input
+        <input className='buttonsNumber'
           type="number"
           placeholder="Номер кнопки"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
         />
 
-        <input
+        <input className='buttonsText'
           type="text"
           placeholder="Текст для кнопки"
           value={inputValue}

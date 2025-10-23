@@ -1,10 +1,12 @@
 
+
 import { useState, useEffect, useCallback } from 'react';
-import './App.css';
+import './App.css'; 
 
 const tg = (window as any).Telegram.WebApp;
 
 function App() {
+
 
   const [inputValue, setInputValue] = useState('');
   const [buttons, setButtons] = useState<string[]>([]);
@@ -24,6 +26,19 @@ function App() {
   useEffect(() => {
     // Повідомляємо Telegram, що Web App готовий
     tg.ready();
+
+    // Читаємо початкові дані з URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const startParams = urlParams.get('start_params');
+
+    if (startParams) {
+      try {
+        const initialData = JSON.parse(startParams);
+        if (initialData.initialButtons && Array.isArray(initialData.initialButtons)) {
+          setButtons(initialData.initialButtons);
+        }
+      } catch (e) { console.error("Failed to parse start_params", e); }
+    }
   }, []);
 
   useEffect(() => {
@@ -58,6 +73,10 @@ function App() {
   return (
     <div className="App">
       <h2>Редактор кнопок</h2>
+      <p className="user-info">
+        Привіт, {tg.initDataUnsafe?.user?.first_name || 'користувач'}!
+        (ID: {tg.initDataUnsafe?.user?.id})
+      </p>
       <div className="form">
         <input
           type="text"
@@ -78,4 +97,5 @@ function App() {
     </div>
   );
 }
+
 export default App;

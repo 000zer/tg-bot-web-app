@@ -94,7 +94,7 @@ fetch(baseUrl , {
         <input className='buttonsText'
           type="text"
           placeholder="Текст для кнопки"
-          value={inputValue}
+          value={bu}
           onChange={(e) => setInputValue(e.target.value)}
         />
         
@@ -103,7 +103,7 @@ fetch(baseUrl , {
       <div className="button-list">
         {buttons.map((text, index) => (
           <div key={index} className="button-item">
-            <span>{text}</span>
+            <span>{index + 1}{text}</span>
             <button onClick={() => handleRemoveButton(index)}>×</button>
           </div>
         ))}

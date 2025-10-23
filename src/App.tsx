@@ -10,6 +10,53 @@ useEffect(()=>{
   const onClose=()=>{
   tg.close();
 }
+
+// Налаштування головної кнопки
+tg.MainButton.text = "Відправити";
+tg.MainButton.color = "#2481cc";
+tg.MainButton.textColor = "#ffffff";
+tg.MainButton.show();
+
+// Обробка натискання
+tg.MainButton.onClick(() => {
+    // Ваш код
+    tg.sendData(JSON.stringify({ action: 'submit' }));
+});
+
+// Показ індикатора завантаження
+tg.MainButton.showProgress();
+
+// Приховування індикатора
+tg.MainButton.hideProgress();
+
+// Вимкнення кнопки
+tg.MainButton.disable();
+
+// Приховування кнопки
+tg.MainButton.hide();
+// Показати кнопку назад
+tg.BackButton.show();
+
+// Обробка натискання
+tg.BackButton.onClick(() => {
+    // Повернутися на попередню сторінку
+    window.history.back();
+});
+
+// Приховати кнопку
+tg.BackButton.hide();
+// Показати кнопку налаштувань
+tg.SettingsButton.show();
+
+// Обробка натискання
+tg.SettingsButton.onClick(() => {
+    // Відкрити налаштування
+    console.log('Settings clicked');
+});
+
+// Приховати
+tg.SettingsButton.hide();
+
   return (
     <>
       <div>

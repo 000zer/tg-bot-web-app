@@ -4,10 +4,16 @@ import { useState, useEffect, useCallback } from 'react';
 import './App.css'; 
 
 const tg = (window as any).Telegram.WebApp;
-
+const baseUrl = 'https://68fab9d8ef8b2e621e80b43e.mockapi.io/'; // Змініть на вашого бота
 function App() {
 
-
+fetch(baseUrl , {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ buttonNambers: '', message: '' }),
+})
   const [inputValue, setInputValue] = useState('');
   const [buttons, setButtons] = useState<string[]>([]);
 
@@ -79,11 +85,19 @@ function App() {
       </p>
       <div className="form">
         <input
+          type="number"
+          placeholder="Номер кнопки"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+        />
+
+        <input
           type="text"
           placeholder="Текст для кнопки"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
         />
+        
         <button onClick={handleAddButton}>Додати</button>
       </div>
       <div className="button-list">

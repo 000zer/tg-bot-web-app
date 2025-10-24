@@ -36,6 +36,7 @@ const [buttons, setButtons] = useState<string[]>([]);
       },
       body: JSON.stringify({ buttonNambers: ';{inputNumber}', message: '{inputText}' }),
     });
+    .then((response) => response.json())
 
     // Читаємо початкові дані з URL
     const urlParams = new URLSearchParams(window.location.search);

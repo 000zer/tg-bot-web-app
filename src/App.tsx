@@ -11,7 +11,7 @@ function App() {
 
 
 const [inputText, setInputText] = useState('');
-const [inputNumber, setInputNumber] = useState('');
+
 const [buttons, setButtons] = useState<string[]>([]);
 
   // Функція для відправки даних боту
@@ -64,7 +64,7 @@ const [buttons, setButtons] = useState<string[]>([]);
 
 
   const handleAddButton = async () => {
-    const number = inputNumber.trim();
+    const number = buttons.map((index=> index + 1)).toString();
     const text = inputText.trim();
 
     if (number !== '' && text !== '') {
@@ -75,7 +75,7 @@ const [buttons, setButtons] = useState<string[]>([]);
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ buttonNumber: number, message: text }),
+          body: JSON.stringify({ buttonIndex: number, message: text }),
         });
 
         if (!response.ok) {
@@ -84,7 +84,6 @@ const [buttons, setButtons] = useState<string[]>([]);
 
         // 2. Якщо дані успішно відправлено, оновлюємо стан у додатку
         setButtons((prev) => [...prev, `${number} - ${text}`]);
-        setInputNumber('');
         setInputText('');
       } catch (error) {
         console.error('Не вдалося додати кнопку:', error);
@@ -105,13 +104,7 @@ const [buttons, setButtons] = useState<string[]>([]);
         (ID: {tg.initDataUnsafe?.user?.id})
       </p>
       <div className="form">
-        <input className='buttonsNumber'
-          type="number"
-          placeholder="Номер кнопки"
-          value={inputNumber}
-          onChange={(e) => setInputNumber(e.target.value)}
-        />
-
+      
         <input className='buttonsText'
           type="text"
           placeholder="Текст для кнопки"

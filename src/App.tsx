@@ -80,7 +80,7 @@ const [editingText, setEditingText] = useState('');
     return () => {
       tg.offEvent('mainButtonClicked', addFirstButton);
     };
-  }, [buttons, addFirstButton]);
+  }, [inputText, addFirstButton]);
 
 
   const handleAddButton = async () => {

@@ -14,8 +14,10 @@ fetch(baseUrl , {
   },
   body: JSON.stringify({ buttonNambers: '', message: '' }),
 })
-  const [inputValue, setInputValue] = useState('');
-  const [buttons, setButtons] = useState<string[]>([]);
+
+const [inputText, setInputText] = useState('');
+const [inputNumber, setInputNumber] = useState('');
+const [buttons, setButtons] = useState<string[]>([]);
 
   // Функція для відправки даних боту
   const onSendData = useCallback(() => {
@@ -66,9 +68,13 @@ fetch(baseUrl , {
   }, [buttons, onSendData]);
 
   const handleAddButton = () => {
-    if (inputValue.trim() !== '') {
-      setButtons((prev) => [...prev, inputValue.trim()]);
-      setInputValue('');
+    if (inputText.trim() !== '') {
+      setButtons((prev) => [...prev, inputText.trim()]);
+      setInputText('');
+    }
+    if (inputNumber.trim() !== '') {
+      setButtons((prev) => [...prev, inputNumber.trim()]);
+      setInputNumber('');
     }
   };
 
@@ -87,15 +93,15 @@ fetch(baseUrl , {
         <input className='buttonsNumber'
           type="number"
           placeholder="Номер кнопки"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          value={inputNumber}
+          onChange={(e) => setInputNumber(e.target.value)}
         />
 
         <input className='buttonsText'
           type="text"
           placeholder="Текст для кнопки"
-          value={bu}
-          onChange={(e) => setInputValue(e.target.value)}
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
         />
         
         <button onClick={handleAddButton}>Додати</button>
@@ -103,7 +109,7 @@ fetch(baseUrl , {
       <div className="button-list">
         {buttons.map((text, index) => (
           <div key={index} className="button-item">
-            <span>{index + 1}{text}</span>
+            <span>{text}</span>
             <button onClick={() => handleRemoveButton(index)}>×</button>
           </div>
         ))}

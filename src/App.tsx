@@ -1,130 +1,27 @@
-import { AppBar, Container, Typography  } from '@mui/material';
-import { makeStyles } from '@mui/styles';
+import { AppBar, Container, TextField, Typography, Button, Box, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Stack } from '@mui/material';
 import { useState, useEffect, useCallback } from 'react';
-import './App.css';
+import './App.css'; // Залишаємо, якщо є глобальні стилі або стилі, не покриті MUI
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DoneIcon from '@mui/icons-material/Done';
 import CancelIcon from '@mui/icons-material/Cancel';
-import SvgIcon from '@mui/material/SvgIcon';
+// import SvgIcon from '@mui/material/SvgIcon';
+
+// Імпортуємо функції для роботи з API та тип Button
+import { getButtons, addButton, deleteButton, updateButton,} from './api';
+import { type Button as ApiButtonType } from './api'; // Перейменовуємо тип, щоб уникнути конфлікту з MUI Button
 
 const tg = (window as any).Telegram.WebApp;
-const baseUrl = 'https://68fab9d8ef8b2e621e80b43e.mockapi.io/users'; // Змініть на вашого бота
-const useStyles = makeStyles(() => ({
-  root: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    minHeight: '100vh',
-  },
-  appBar: {
-    // minWidth: '100vw',
-  },
-  header: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '20px 0',
-    margin: '0',
-  },
-  buttonList: {
-    marginTop: '20px',
-    width: '100%',
-  },
-  buttonItem: {
-    display: 'flex',
-    // justifyContent: 'space-between',
-    alignItems: 'center',
-    borderRadius: '8px',
-    margin: '0px 10px 10px',
-    minHeight: '40px', boxShadow: 'none',
-
-    padding: '6px 12px',
-    border: '1px solid',
-    backgroundColor: '#0063cc',
-    borderColor: '#0063cc',
-    '&:hover': {
-      backgroundColor: '#0069d9',
-      borderColor: '#0062cc',
-      boxShadow: 'none',
-    },
-    '&:active': {
-      boxShadow: 'none',
-      backgroundColor: '#0062cc',
-      borderColor: '#005cbf',
-    },
-    '&:focus': {
-      boxShadow: '0 0 0 0.2rem rgba(0,123,255,.5)',
-    },
-  },
-  buttonText: {
-    textTransform: 'none',
-    fontSize: 24,
-    fontWeight: 400,
-paddingLeft: 16,
-    lineHeight: 1.5,
-    fontFamily: [
-      '-apple-system',
-      'BlinkMacSystemFont',
-      '"Segoe UI"',
-      'Roboto',
-      '"Helvetica Neue"',
-      'Arial',
-      'sans-serif',
-      '"Apple Color Emoji"',
-      '"Segoe UI Emoji"',
-      '"Segoe UI Symbol"',
-    ].join(','),
-  },
-  buttonsContainer: {
-    marginLeft: 'auto',
-    display: 'flex',
-    gap: '8px',
-  },
-  btn: {
-    borderRadius:'50%',
-    border: 'none',
-    textAlign: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
-
-  },
-  main: {
-
-    // marginTop: `${theme.spacing(8)}px`,
-  },
-}));
 function App() {
-  const classes = useStyles();
-  // Визначимо тип для наших кнопок
-  type Button = {
-    id: string;
-    buttonIndex: string;
-    message: string;
-  };
-
   const [inputText, setInputText] = useState('');
   // Змінюємо стан для зберігання масиву об'єктів кнопок
-  const [buttons, setButtons] = useState<Button[]>([]);
+  const [buttons, setButtons] = useState<ApiButtonType[]>([]); // Використовуємо перейменований тип
   // Стан для відстеження редагованої кнопки та її нового тексту
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   // Стан для видимості форми додавання
   const [isFormVisible, setFormVisible] = useState(false);
 
-
-  // Функція для відправки даних боту
-  const onSendData = useCallback(() => {
-    if (buttons.length === 0) {
-      tg.showAlert('Будь ласка, додайте хоча б одну кнопку.');
-      return;
-    }
-    const data = {
-      buttons: buttons.map(b => `${b.buttonIndex} - ${b.message}`),
-    };
-    tg.sendData(JSON.stringify(data));
-  }, [buttons]);
 
   useEffect(() => {
     // Повідомляємо Telegram, що Web App готовий
@@ -133,13 +30,12 @@ function App() {
     // Завантажуємо існуючі кнопки з API при відкритті
     const fetchButtons = async () => {
       try {
-        const response = await fetch(baseUrl);
-        if (!response.ok) throw new Error('Не вдалося завантажити кнопки');
-        const data: Button[] = await response.json();
+        const data = await getButtons(); // Використовуємо функцію з api.ts
         setButtons(data);
       } catch (error) {
-        console.error(error);
-        tg.showAlert('Помилка при завантаженні списку кнопок.');
+        // Сюди потраплять помилки мережі (TypeError) або кинуті вище помилки
+        console.error('Помилка завантаження кнопок:', error);
+        tg.showAlert('Не вдалося завантажити список кнопок. Перевірте з\'єднання або URL API.');
       }
     };
 
@@ -147,21 +43,39 @@ function App() {
     fetchButtons();
   }, []);
 
-  useEffect(() => {
-
-    // Режим переходу до форми додавання
-    tg.MainButton.setText('Додати кнопку');
-    tg.MainButton.show();
-    tg.MainButton.onClick(() => setFormVisible(true));
-
-    // Прибираємо слухача при демонтажі компонента або зміні onSendData
-    return () => {
-      // Важливо очистити обробник, щоб уникнути виклику старої функції
-      tg.MainButton.offClick(onSendData);
-      tg.MainButton.offClick(() => setFormVisible(true));
+  // Функція для відправки даних боту
+  const onSendData = useCallback(() => {
+    if (buttons.length === 0) {
+      tg.showAlert('Будь ласка, додайте хоча б одну кнопку.');
+      return;
+    }
+    const data = {
+      // Надсилаємо масив об'єктів, а не просто рядки
+      buttons: buttons.map(b => ({ buttonIndex: b.buttonIndex, message: b.message })),
     };
-  }, [buttons, onSendData, isFormVisible]);
+    tg.sendData(JSON.stringify(data));
+  }, [buttons]);
 
+  useEffect(() => {
+    const handleMainButtonClick = () => setFormVisible(true);
+    
+    if (isFormVisible) {
+      tg.MainButton.setText('Надіслати список');
+      tg.MainButton.onClick(onSendData);
+    } else {
+      tg.MainButton.setText('Додати кнопку');
+      tg.MainButton.onClick(handleMainButtonClick);
+    }
+    
+    if (!tg.MainButton.isVisible) {
+      tg.MainButton.show();
+    }
+    
+    return () => {
+      tg.MainButton.offClick(onSendData);
+      tg.MainButton.offClick(handleMainButtonClick);
+    };
+  }, [isFormVisible, onSendData]);
 
   const handleAddButton = async () => {
     const text = inputText.trim();
@@ -169,21 +83,8 @@ function App() {
 
     if (number !== '' && text !== '') {
       try {
-        // 1. Відправляємо дані на ваш API
-        const response = await fetch(baseUrl, { // Використовуємо оновлений baseUrl
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ buttonIndex: number, message: text }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Помилка мережі або сервера');
-        }
-
-        const newButton: Button = await response.json();
-
+        // 1. Викликаємо функцію для додавання кнопки
+        const newButton = await addButton({ buttonIndex: number, message: text });
         // 2. Якщо дані успішно відправлено, оновлюємо стан у додатку
         setButtons((prev) => [...prev, newButton]);
         setInputText('');
@@ -197,15 +98,7 @@ function App() {
   };
   const handleRemoveButton = async (idToRemove: string) => {
     try {
-      const response = await fetch(`${baseUrl}/${idToRemove}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Помилка при видаленні на сервері');
-      }
-
-      // Якщо на сервері видалено успішно, оновлюємо локальний стан
+      await deleteButton(idToRemove); // Викликаємо функцію для видалення
       setButtons((prev) => prev.filter((button) => button.id !== idToRemove));
     } catch (error) {
       console.error('Не вдалося видалити кнопку:', error);
@@ -214,7 +107,7 @@ function App() {
   };
 
   // Функція для початку редагування
-  const handleEdit = (button: Button) => {
+  const handleEdit = (button: ApiButtonType) => { // Використовуємо перейменований тип
     setEditingId(button.id);
     setEditingText(button.message);
   };
@@ -226,19 +119,13 @@ function App() {
   };
 
   // Функція для збереження змін
-  const handleSaveEdit = async (buttonToUpdate: Button) => {
+  const handleSaveEdit = async (buttonToUpdate: ApiButtonType) => { // Використовуємо перейменований тип
     try {
-      const response = await fetch(`${baseUrl}/${buttonToUpdate.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...buttonToUpdate, message: editingText }),
-      });
-
-      if (!response.ok) throw new Error('Помилка при оновленні');
-
+      const updatedButtonData = { ...buttonToUpdate, message: editingText };
+      await updateButton(updatedButtonData); // Викликаємо функцію для оновлення
       // Оновлюємо локальний стан
       setButtons(buttons.map(b =>
-        b.id === buttonToUpdate.id ? { ...b, message: editingText } : b
+        b.id === buttonToUpdate.id ? updatedButtonData : b
       ));
 
       // Виходимо з режиму редагування
@@ -251,63 +138,87 @@ function App() {
 
   return (
     <>
-      <AppBar position='static' className={classes.appBar}>
-        <Container className={classes.header}>
+      <AppBar position='static'>
+        <Container sx={{ textAlign: 'center', padding: '10px' }}>
           <Typography variant="h4">Редактор кнопок</Typography>
-          <Typography variant='h6'>Привіт, {tg.initDataUnsafe?.user?.first_name || 'користувач'}!</Typography>
         </Container>
       </AppBar>
-      <main className={classes.main}>
-        <div>
+      <Container sx={{p:'0'}}>
+        <Box sx={{ mt: 2 }}> {/* Додаємо Box для відступу зверху */}
           {isFormVisible && (
-            <div className="form">
-              <input
-                className="buttonsText"
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 2, border: '1px solid #ccc', borderRadius: '4px', mb: 2 }}>
+              <TextField
+                // className="buttonsText" // Видаляємо кастомний клас
+                label="Текст для кнопки" // Додаємо label для кращого UX
+                variant="outlined"
+                fullWidth
                 type="text"
-                placeholder="Текст для кнопки"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
               />
-
-              <button onClick={handleAddButton}>Зберегти</button>
-              <button onClick={() => setFormVisible(false)} className="cancel-btn">
-                Скасувати
-              </button>
-            </div>
+              <Stack direction="row" spacing={2} justifyContent="flex-end"> {/* Використовуємо Stack для кнопок */}
+                <Button variant="contained" onClick={handleAddButton}>Зберегти</Button>
+                <Button variant="outlined" color="error" onClick={() => setFormVisible(false)}>
+                  Скасувати
+                </Button>
+              </Stack>
+            </Box>
           )}
-          <div className={classes.buttonList}>
+          <List> {/* Використовуємо List для обгортання елементів */}
             {buttons.map((button) => (
-              <div key={button.id} className={classes.buttonItem}>
+              <ListItem 
+                key={button.id} 
+                sx={{ 
+                  border: '1px solid #ccc', 
+                  borderRadius: '4px', 
+                  mb: 1, // Відступ між елементами списку
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  p: 1 // Внутрішній відступ для ListItem
+                }}
+              >
                 {editingId === button.id ? (
                   // --- Режим редагування ---
                   <>
-                    <input
+                    <TextField
+                      variant="outlined"
+                      size="small" // Робимо меншим для вбудованого редагування
                       type="text"
                       value={editingText}
                       onChange={(e) => setEditingText(e.target.value)}
-                      className="edit-input"
+                      sx={{ flexGrow: 1, mr: 1 }} // Займає доступний простір
                     />
-                    <div className={classes.buttonsContainer}>
-                    <button onClick={() => handleSaveEdit(button)} className={classes.btn}><SvgIcon component={DoneIcon} inheritViewBox /></button>
-                    <button onClick={handleCancelEdit} className={classes.btn}><SvgIcon component={CancelIcon} inheritViewBox /></button>
-                    </div>
+                    <Stack direction="row" spacing={0.5}> {/* Використовуємо Stack для кнопок дій */}
+                      <IconButton onClick={() => handleSaveEdit(button)} color="primary">
+                        <DoneIcon />
+                      </IconButton>
+                      <IconButton onClick={handleCancelEdit} color="error">
+                        <CancelIcon />
+                      </IconButton>
+                    </Stack>
                   </>
-
                 ) : (
                   // --- Режим перегляду ---
                   <>
-                    <span className={classes.buttonText}>{`${button.message}`}</span>
-                    <div className={classes.buttonsContainer}>
-                      <button onClick={() => handleEdit(button)} className={classes.btn}><SvgIcon component={EditIcon} inheritViewBox /></button>
-                      <button onClick={() => handleRemoveButton(button.id)} className={classes.btn}><SvgIcon component={DeleteIcon} inheritViewBox /></button>
-                    </div>
+                    <ListItemText primary={button.message} sx={{ flexGrow: 1 }} /> {/* Використовуємо ListItemText */}
+                    <ListItemSecondaryAction> {/* Розміщуємо дії праворуч */}
+                      <Stack direction="row" spacing={0.5}>
+                        <IconButton onClick={() => handleEdit(button)} color="info">
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton onClick={() => handleRemoveButton(button.id)} color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      </Stack>
+                    </ListItemSecondaryAction>
                   </>
                 )}
-              </div>
+              </ListItem>
             ))}
-          </div>
-        </div>
-      </main>
+          </List>
+        </Box>
+      </Container>
     </>
   );
 }

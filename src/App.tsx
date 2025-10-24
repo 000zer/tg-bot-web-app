@@ -7,14 +7,6 @@ const tg = (window as any).Telegram.WebApp;
 const baseUrl = 'https://68fab9d8ef8b2e621e80b43e.mockapi.io/'; // Змініть на вашого бота
 function App() {
 
-fetch(baseUrl , {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({ buttonNambers: '', message: '' }),
-})
-
 const [inputText, setInputText] = useState('');
 const [inputNumber, setInputNumber] = useState('');
 const [buttons, setButtons] = useState<string[]>([]);
@@ -34,6 +26,16 @@ const [buttons, setButtons] = useState<string[]>([]);
   useEffect(() => {
     // Повідомляємо Telegram, що Web App готовий
     tg.ready();
+
+    // Цей fetch-запит тепер виконується лише один раз при завантаженні компонента.
+    // Якщо він не потрібен, його можна видалити.
+    fetch(baseUrl , {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ buttonNambers: ';{inputNumber}', message: '{inputText}' }),
+    });
 
     // Читаємо початкові дані з URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -69,7 +71,8 @@ const [buttons, setButtons] = useState<string[]>([]);
 
   const handleAddButton = () => {
     if (inputNumber.trim() !== '' && inputText.trim() !== '') {
-      setButtons((prev) => [...prev,inputNumber.trim(), inputText.trim()]);
+      // Об'єднуємо номер і текст в один рядок
+      setButtons((prev) => [...prev, `${inputNumber.trim()} - ${inputText.trim()}`]);
       setInputNumber('');
       setInputText('');
     }

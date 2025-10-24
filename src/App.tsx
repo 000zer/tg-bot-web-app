@@ -7,6 +7,7 @@ const tg = (window as any).Telegram.WebApp;
 const baseUrl = 'https://68fab9d8ef8b2e621e80b43e.mockapi.io/'; // Змініть на вашого бота
 function App() {
 
+
 const [inputText, setInputText] = useState('');
 const [inputNumber, setInputNumber] = useState('');
 const [buttons, setButtons] = useState<string[]>([]);
@@ -26,17 +27,6 @@ const [buttons, setButtons] = useState<string[]>([]);
   useEffect(() => {
     // Повідомляємо Telegram, що Web App готовий
     tg.ready();
-
-    // Цей fetch-запит тепер виконується лише один раз при завантаженні компонента.
-    // Якщо він не потрібен, його можна видалити.
-    fetch(baseUrl , {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ buttonNambers: ';{inputNumber}', message: '{inputText}' }),
-    });
-    .then((response) => response.json())
 
     // Читаємо початкові дані з URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -70,12 +60,34 @@ const [buttons, setButtons] = useState<string[]>([]);
     };
   }, [buttons, onSendData]);
 
-  const handleAddButton = () => {
-    if (inputNumber.trim() !== '' && inputText.trim() !== '') {
-      // Об'єднуємо номер і текст в один рядок
-      setButtons((prev) => [...prev, `${inputNumber.trim()} - ${inputText.trim()}`]);
-      setInputNumber('');
-      setInputText('');
+
+  const handleAddButton = async () => {
+    const number = inputNumber.trim();
+    const text = inputText.trim();
+
+    if (number !== '' && text !== '') {
+      try {
+        // 1. Відправляємо дані на ваш API
+        const response = await fetch(baseUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ buttonNumber: number, message: text }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Помилка мережі або сервера');
+        }
+
+        // 2. Якщо дані успішно відправлено, оновлюємо стан у додатку
+        setButtons((prev) => [...prev, `${number} - ${text}`]);
+        setInputNumber('');
+        setInputText('');
+      } catch (error) {
+        console.error('Не вдалося додати кнопку:', error);
+        tg.showAlert('Сталася помилка при збереженні кнопки. Спробуйте ще раз.');
+      }
     }
 
   };

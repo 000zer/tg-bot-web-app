@@ -7,12 +7,18 @@ const tg = (window as any).Telegram.WebApp;
 const baseUrl = 'https://68fab9d8ef8b2e621e80b43e.mockapi.io/users'; // Змініть на вашого бота
 
 function App() {
+// Визначимо тип для наших кнопок
+type Button = {
+  id: string;
+  buttonIndex: string;
+  message: string;
+};
 
 
 
 const [inputText, setInputText] = useState('');
-
-const [buttons, setButtons] = useState<string[]>([]);
+// Змінюємо стан для зберігання масиву об'єктів кнопок
+const [buttons, setButtons] = useState<Button[]>([]);
 
   // Функція для відправки даних боту
   const onSendData = useCallback(() => {
@@ -21,7 +27,7 @@ const [buttons, setButtons] = useState<string[]>([]);
       return;
     }
     const data = {
-      buttons: buttons,
+      buttons: buttons.map(b => `${b.buttonIndex} - ${b.message}`),
     };
     tg.sendData(JSON.stringify(data));
   }, [buttons]);
@@ -30,18 +36,20 @@ const [buttons, setButtons] = useState<string[]>([]);
     // Повідомляємо Telegram, що Web App готовий
     tg.ready();
 
-    // Читаємо початкові дані з URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const startParams = urlParams.get('start_params');
-
-    if (startParams) {
+    // Завантажуємо існуючі кнопки з API при відкритті
+    const fetchButtons = async () => {
       try {
-        const initialData = JSON.parse(startParams);
-        if (initialData.initialButtons && Array.isArray(initialData.initialButtons)) {
-          setButtons(initialData.initialButtons);
-        }
-      } catch (e) { console.error("Failed to parse start_params", e); }
-    }
+        const response = await fetch(baseUrl);
+        if (!response.ok) throw new Error('Не вдалося завантажити кнопки');
+        const data: Button[] = await response.json();
+        setButtons(data);
+      } catch (error) {
+        console.error(error);
+        tg.showAlert('Помилка при завантаженні списку кнопок.');
+      }
+    };
+
+    fetchButtons();
   }, []);
 
   useEffect(() => {
@@ -64,8 +72,8 @@ const [buttons, setButtons] = useState<string[]>([]);
 
 
   const handleAddButton = async () => {
-    const number = buttons.map((index=> index + 1)).toString();
     const text = inputText.trim();
+    const number = (buttons.length + 1).toString(); // Простий спосіб нумерації
 
     if (number !== '' && text !== '') {
       try {
@@ -82,8 +90,10 @@ const [buttons, setButtons] = useState<string[]>([]);
           throw new Error('Помилка мережі або сервера');
         }
 
+        const newButton: Button = await response.json();
+
         // 2. Якщо дані успішно відправлено, оновлюємо стан у додатку
-        setButtons((prev) => [...prev, `${number} - ${text}`]);
+        setButtons((prev) => [...prev, newButton]);
         setInputText('');
       } catch (error) {
         console.error('Не вдалося додати кнопку:', error);
@@ -91,9 +101,22 @@ const [buttons, setButtons] = useState<string[]>([]);
       }
     }
   };
+  const handleRemoveButton = async (idToRemove: string) => {
+    try {
+      const response = await fetch(`${baseUrl}/${idToRemove}`, {
+        method: 'DELETE',
+      });
 
-  const handleRemoveButton = (indexToRemove: number) => {
-    setButtons((prev) => prev.filter((_, index) => index !== indexToRemove));
+      if (!response.ok) {
+        throw new Error('Помилка при видаленні на сервері');
+      }
+
+      // Якщо на сервері видалено успішно, оновлюємо локальний стан
+      setButtons((prev) => prev.filter((button) => button.id !== idToRemove));
+    } catch (error) {
+      console.error('Не вдалося видалити кнопку:', error);
+      tg.showAlert('Сталася помилка при видаленні кнопки.');
+    }
   };
 
   return (
@@ -101,7 +124,6 @@ const [buttons, setButtons] = useState<string[]>([]);
       <h2>Редактор кнопок</h2>
       <p className="user-info">
         Привіт, {tg.initDataUnsafe?.user?.first_name || 'користувач'}!
-        (ID: {tg.initDataUnsafe?.user?.id})
       </p>
       <div className="form">
       
@@ -115,15 +137,14 @@ const [buttons, setButtons] = useState<string[]>([]);
         <button onClick={handleAddButton}>Додати</button>
       </div>
       <div className="button-list">
-        {buttons.map((text, index) => (
-          <div key={index} className="button-item">
-            <span>{text}</span>
-            <button onClick={() => handleRemoveButton(index)}>×</button>
+        {buttons.map((button) => (
+          <div key={button.id} className="button-item">
+            <span>{`${button.buttonIndex} - ${button.message}`}</span>
+            <button onClick={() => handleRemoveButton(button.id)}>×</button>
           </div>
         ))}
       </div>
     </div>
   );
 }
-
 export default App;

@@ -4,8 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import './App.css'; 
 
 const tg = (window as any).Telegram.WebApp;
-const baseUrl = 'https://68fab9d8ef8b2e621e80b43e.mockapi.io/'; // Змініть на вашого бота
+const baseUrl = 'https://68fab9d8ef8b2e621e80b43e.mockapi.io/users'; // Змініть на вашого бота
+
 function App() {
+
 
 
 const [inputText, setInputText] = useState('');
@@ -68,7 +70,7 @@ const [buttons, setButtons] = useState<string[]>([]);
     if (number !== '' && text !== '') {
       try {
         // 1. Відправляємо дані на ваш API
-        const response = await fetch(baseUrl, {
+        const response = await fetch(baseUrl, { // Використовуємо оновлений baseUrl
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -89,7 +91,6 @@ const [buttons, setButtons] = useState<string[]>([]);
         tg.showAlert('Сталася помилка при збереженні кнопки. Спробуйте ще раз.');
       }
     }
-
   };
 
   const handleRemoveButton = (indexToRemove: number) => {

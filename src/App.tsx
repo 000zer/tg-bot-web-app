@@ -25,16 +25,23 @@ const [editingText, setEditingText] = useState('');
 
 
   // Функція для відправки даних боту
-  const onSendData = useCallback(() => {
-    if (buttons.length === 0) {
-      tg.showAlert('Будь ласка, додайте хоча б одну кнопку.');
-      return;
-    }
-    const data = {
-      buttons: buttons.map(b => `${b.buttonIndex} - ${b.message}`),
-    };
-    tg.sendData(JSON.stringify(data));
-  }, [buttons]);
+  const addFirstButton = useCallback(() => {
+    return (
+       <div className="form">
+      
+        <input className='buttonsText'
+          type="text"
+          placeholder="Текст для кнопки"
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+        />
+        
+        <button onClick={handleAddButton}>Додати</button>
+      </div>
+    );
+  }, [inputText]);
+
+ 
 
   useEffect(() => {
     // Повідомляємо Telegram, що Web App готовий
@@ -59,21 +66,21 @@ const [editingText, setEditingText] = useState('');
 
   useEffect(() => {
     // Налаштовуємо головну кнопку Telegram
-    if (buttons.length > 0) {
-      tg.MainButton.setText(`Відправити ${buttons.length} кнопки`);
+    if (buttons.length == 0) {
+      tg.MainButton.setText(`Додати кнопки`);
       tg.MainButton.show();
     } else {
       tg.MainButton.hide();
     }
 
     // Додаємо слухача події на головну кнопку
-    tg.onEvent('mainButtonClicked', onSendData);
+    tg.onEvent('mainButtonClicked', addFirstButton);
 
     // Прибираємо слухача при демонтажі компонента або зміні onSendData
     return () => {
-      tg.offEvent('mainButtonClicked', onSendData);
+      tg.offEvent('mainButtonClicked', addFirstButton);
     };
-  }, [buttons, onSendData]);
+  }, [buttons, addFirstButton]);
 
 
   const handleAddButton = async () => {
@@ -166,17 +173,7 @@ const [editingText, setEditingText] = useState('');
       <p className="user-info">
         Привіт, {tg.initDataUnsafe?.user?.first_name || 'користувач'}!
       </p>
-      <div className="form">
-      
-        <input className='buttonsText'
-          type="text"
-          placeholder="Текст для кнопки"
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-        />
-        
-        <button onClick={handleAddButton}>Додати</button>
-      </div>
+     
       <div className="button-list">
         {buttons.map((button) => (
           <div key={button.id} className="button-item">

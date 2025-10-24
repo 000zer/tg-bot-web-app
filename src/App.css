@@ -1,6 +1,15 @@
-/* #root {
+#root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
+}
+.body {
+    margin: 0;
+}
+/* .App {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 20px;
+  background-color: azure;
+  min-height: 100vh;
 } */

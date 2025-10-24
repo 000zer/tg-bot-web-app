@@ -1,29 +1,117 @@
-
-
+import { AppBar, Container, Typography  } from '@mui/material';
+import { makeStyles } from '@mui/styles';
 import { useState, useEffect, useCallback } from 'react';
-import './App.css'; 
+import './App.css';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import DoneIcon from '@mui/icons-material/Done';
+import CancelIcon from '@mui/icons-material/Cancel';
+import SvgIcon from '@mui/material/SvgIcon';
 
 const tg = (window as any).Telegram.WebApp;
 const baseUrl = 'https://68fab9d8ef8b2e621e80b43e.mockapi.io/users'; // Змініть на вашого бота
+const useStyles = makeStyles(() => ({
+  root: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    minHeight: '100vh',
+  },
+  appBar: {
+    // minWidth: '100vw',
+  },
+  header: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '20px 0',
+    margin: '0',
+  },
+  buttonList: {
+    marginTop: '20px',
+    width: '100%',
+  },
+  buttonItem: {
+    display: 'flex',
+    // justifyContent: 'space-between',
+    alignItems: 'center',
+    borderRadius: '8px',
+    margin: '0px 10px 10px',
+    minHeight: '40px', boxShadow: 'none',
 
+    padding: '6px 12px',
+    border: '1px solid',
+    backgroundColor: '#0063cc',
+    borderColor: '#0063cc',
+    '&:hover': {
+      backgroundColor: '#0069d9',
+      borderColor: '#0062cc',
+      boxShadow: 'none',
+    },
+    '&:active': {
+      boxShadow: 'none',
+      backgroundColor: '#0062cc',
+      borderColor: '#005cbf',
+    },
+    '&:focus': {
+      boxShadow: '0 0 0 0.2rem rgba(0,123,255,.5)',
+    },
+  },
+  buttonText: {
+    textTransform: 'none',
+    fontSize: 24,
+    fontWeight: 400,
+paddingLeft: 16,
+    lineHeight: 1.5,
+    fontFamily: [
+      '-apple-system',
+      'BlinkMacSystemFont',
+      '"Segoe UI"',
+      'Roboto',
+      '"Helvetica Neue"',
+      'Arial',
+      'sans-serif',
+      '"Apple Color Emoji"',
+      '"Segoe UI Emoji"',
+      '"Segoe UI Symbol"',
+    ].join(','),
+  },
+  buttonsContainer: {
+    marginLeft: 'auto',
+    display: 'flex',
+    gap: '8px',
+  },
+  btn: {
+    borderRadius:'50%',
+    border: 'none',
+    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+
+  },
+  main: {
+
+    // marginTop: `${theme.spacing(8)}px`,
+  },
+}));
 function App() {
-// Визначимо тип для наших кнопок
-type Button = {
-  id: string;
-  buttonIndex: string;
-  message: string;
-};
+  const classes = useStyles();
+  // Визначимо тип для наших кнопок
+  type Button = {
+    id: string;
+    buttonIndex: string;
+    message: string;
+  };
 
-
-
-const [inputText, setInputText] = useState('');
-// Змінюємо стан для зберігання масиву об'єктів кнопок
-const [buttons, setButtons] = useState<Button[]>([]);
-// Стан для відстеження редагованої кнопки та її нового тексту
-const [editingId, setEditingId] = useState<string | null>(null);
-const [editingText, setEditingText] = useState('');
-// Стан для видимості форми додавання
-const [isFormVisible, setFormVisible] = useState(false);
+  const [inputText, setInputText] = useState('');
+  // Змінюємо стан для зберігання масиву об'єктів кнопок
+  const [buttons, setButtons] = useState<Button[]>([]);
+  // Стан для відстеження редагованої кнопки та її нового тексту
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+  // Стан для видимості форми додавання
+  const [isFormVisible, setFormVisible] = useState(false);
 
 
   // Функція для відправки даних боту
@@ -60,17 +148,11 @@ const [isFormVisible, setFormVisible] = useState(false);
   }, []);
 
   useEffect(() => {
-    if (isFormVisible && buttons.length > 0) {
-      // Режим відправки даних
-      tg.MainButton.setText(`Відправити ${buttons.length} кнопки`);
-      tg.MainButton.show();
-      tg.MainButton.onClick(onSendData);
-    } else {
-      // Режим переходу до форми додавання
-      tg.MainButton.setText('Додати кнопку');
-      tg.MainButton.show();
-      tg.MainButton.onClick(() => setFormVisible(true));
-    }
+
+    // Режим переходу до форми додавання
+    tg.MainButton.setText('Додати кнопку');
+    tg.MainButton.show();
+    tg.MainButton.onClick(() => setFormVisible(true));
 
     // Прибираємо слухача при демонтажі компонента або зміні onSendData
     return () => {
@@ -83,7 +165,7 @@ const [isFormVisible, setFormVisible] = useState(false);
 
   const handleAddButton = async () => {
     const text = inputText.trim();
-    const number = (buttons.length + 1).toString(); // Простий спосіб нумерації
+    let number = (buttons.length + 1).toString(); // Простий спосіб нумерації
 
     if (number !== '' && text !== '') {
       try {
@@ -130,7 +212,7 @@ const [isFormVisible, setFormVisible] = useState(false);
       tg.showAlert('Сталася помилка при видаленні кнопки.');
     }
   };
-  
+
   // Функція для початку редагування
   const handleEdit = (button: Button) => {
     setEditingId(button.id);
@@ -155,7 +237,7 @@ const [isFormVisible, setFormVisible] = useState(false);
       if (!response.ok) throw new Error('Помилка при оновленні');
 
       // Оновлюємо локальний стан
-      setButtons(buttons.map(b => 
+      setButtons(buttons.map(b =>
         b.id === buttonToUpdate.id ? { ...b, message: editingText } : b
       ));
 
@@ -168,55 +250,65 @@ const [isFormVisible, setFormVisible] = useState(false);
   };
 
   return (
-    <div className="App">
-      <h2>Редактор кнопок</h2>
-      <p className="user-info">
-        Привіт, {tg.initDataUnsafe?.user?.first_name || 'користувач'}!
-      </p>
-      {isFormVisible && (
-        <div className="form">
-          <input
-            className="buttonsText"
-            type="text"
-            placeholder="Текст для кнопки"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-          />
-          <button onClick={handleAddButton}>Зберегти</button>
-          <button onClick={() => setFormVisible(false)} className="cancel-btn">
-            Скасувати
-          </button>
-        </div>
-      )}
-      <div className="button-list">
-        {buttons.map((button) => (
-          <div key={button.id} className="button-item">
-            {editingId === button.id ? (
-              // --- Режим редагування ---
-              <>
-                <input 
-                  type="text" 
-                  value={editingText} 
-                  onChange={(e) => setEditingText(e.target.value)} 
-                  className="edit-input"
-                />
-                <button onClick={() => handleSaveEdit(button)} className="save-btn">✓</button>
-                <button onClick={handleCancelEdit} className="cancel-btn">×</button>
-              </>
-            ) : (
-              // --- Режим перегляду ---
-              <>
-                <span>{`${button.buttonIndex} - ${button.message}`}</span>
-                <div>
-                  <button onClick={() => handleEdit(button)} className="edit-btn">✎</button>
-                  <button onClick={() => handleRemoveButton(button.id)} className="delete-btn">×</button>
-                </div>
-              </>
-            )}
+    <>
+      <AppBar position='static' className={classes.appBar}>
+        <Container className={classes.header}>
+          <Typography variant="h4">Редактор кнопок</Typography>
+          <Typography variant='h6'>Привіт, {tg.initDataUnsafe?.user?.first_name || 'користувач'}!</Typography>
+        </Container>
+      </AppBar>
+      <main className={classes.main}>
+        <div>
+          {isFormVisible && (
+            <div className="form">
+              <input
+                className="buttonsText"
+                type="text"
+                placeholder="Текст для кнопки"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+              />
+
+              <button onClick={handleAddButton}>Зберегти</button>
+              <button onClick={() => setFormVisible(false)} className="cancel-btn">
+                Скасувати
+              </button>
+            </div>
+          )}
+          <div className={classes.buttonList}>
+            {buttons.map((button) => (
+              <div key={button.id} className={classes.buttonItem}>
+                {editingId === button.id ? (
+                  // --- Режим редагування ---
+                  <>
+                    <input
+                      type="text"
+                      value={editingText}
+                      onChange={(e) => setEditingText(e.target.value)}
+                      className="edit-input"
+                    />
+                    <div className={classes.buttonsContainer}>
+                    <button onClick={() => handleSaveEdit(button)} className={classes.btn}><SvgIcon component={DoneIcon} inheritViewBox /></button>
+                    <button onClick={handleCancelEdit} className={classes.btn}><SvgIcon component={CancelIcon} inheritViewBox /></button>
+                    </div>
+                  </>
+
+                ) : (
+                  // --- Режим перегляду ---
+                  <>
+                    <span className={classes.buttonText}>{`${button.message}`}</span>
+                    <div className={classes.buttonsContainer}>
+                      <button onClick={() => handleEdit(button)} className={classes.btn}><SvgIcon component={EditIcon} inheritViewBox /></button>
+                      <button onClick={() => handleRemoveButton(button.id)} className={classes.btn}><SvgIcon component={DeleteIcon} inheritViewBox /></button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-    </div>
+        </div>
+      </main>
+    </>
   );
 }
 export default App;

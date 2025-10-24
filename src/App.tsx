@@ -19,6 +19,10 @@ type Button = {
 const [inputText, setInputText] = useState('');
 // Змінюємо стан для зберігання масиву об'єктів кнопок
 const [buttons, setButtons] = useState<Button[]>([]);
+// Стан для відстеження редагованої кнопки та її нового тексту
+const [editingId, setEditingId] = useState<string | null>(null);
+const [editingText, setEditingText] = useState('');
+
 
   // Функція для відправки даних боту
   const onSendData = useCallback(() => {
@@ -48,6 +52,7 @@ const [buttons, setButtons] = useState<Button[]>([]);
         tg.showAlert('Помилка при завантаженні списку кнопок.');
       }
     };
+
 
     fetchButtons();
   }, []);
@@ -118,6 +123,42 @@ const [buttons, setButtons] = useState<Button[]>([]);
       tg.showAlert('Сталася помилка при видаленні кнопки.');
     }
   };
+  
+  // Функція для початку редагування
+  const handleEdit = (button: Button) => {
+    setEditingId(button.id);
+    setEditingText(button.message);
+  };
+
+  // Функція для скасування редагування
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingText('');
+  };
+
+  // Функція для збереження змін
+  const handleSaveEdit = async (buttonToUpdate: Button) => {
+    try {
+      const response = await fetch(`${baseUrl}/${buttonToUpdate.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...buttonToUpdate, message: editingText }),
+      });
+
+      if (!response.ok) throw new Error('Помилка при оновленні');
+
+      // Оновлюємо локальний стан
+      setButtons(buttons.map(b => 
+        b.id === buttonToUpdate.id ? { ...b, message: editingText } : b
+      ));
+
+      // Виходимо з режиму редагування
+      handleCancelEdit();
+    } catch (error) {
+      console.error('Не вдалося зберегти зміни:', error);
+      tg.showAlert('Не вдалося зберегти зміни.');
+    }
+  };
 
   return (
     <div className="App">
@@ -139,8 +180,28 @@ const [buttons, setButtons] = useState<Button[]>([]);
       <div className="button-list">
         {buttons.map((button) => (
           <div key={button.id} className="button-item">
-            <span>{`${button.buttonIndex} - ${button.message}`}</span>
-            <button onClick={() => handleRemoveButton(button.id)}>×</button>
+            {editingId === button.id ? (
+              // --- Режим редагування ---
+              <>
+                <input 
+                  type="text" 
+                  value={editingText} 
+                  onChange={(e) => setEditingText(e.target.value)} 
+                  className="edit-input"
+                />
+                <button onClick={() => handleSaveEdit(button)} className="save-btn">✓</button>
+                <button onClick={handleCancelEdit} className="cancel-btn">×</button>
+              </>
+            ) : (
+              // --- Режим перегляду ---
+              <>
+                <span>{`${button.buttonIndex} - ${button.message}`}</span>
+                <div>
+                  <button onClick={() => handleEdit(button)} className="edit-btn">✎</button>
+                  <button onClick={() => handleRemoveButton(button.id)} className="delete-btn">×</button>
+                </div>
+              </>
+            )}
           </div>
         ))}
       </div>

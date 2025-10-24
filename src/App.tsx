@@ -68,14 +68,12 @@ const [buttons, setButtons] = useState<string[]>([]);
   }, [buttons, onSendData]);
 
   const handleAddButton = () => {
-    if (inputText.trim() !== '') {
-      setButtons((prev) => [...prev, inputText.trim()]);
+    if (inputNumber.trim() !== '' && inputText.trim() !== '') {
+      setButtons((prev) => [...prev,inputNumber.trim(), inputText.trim()]);
+      setInputNumber('');
       setInputText('');
     }
-    if (inputNumber.trim() !== '') {
-      setButtons((prev) => [...prev, inputNumber.trim()]);
-      setInputNumber('');
-    }
+
   };
 
   const handleRemoveButton = (indexToRemove: number) => {

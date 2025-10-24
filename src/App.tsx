@@ -22,26 +22,21 @@ const [buttons, setButtons] = useState<Button[]>([]);
 // Стан для відстеження редагованої кнопки та її нового тексту
 const [editingId, setEditingId] = useState<string | null>(null);
 const [editingText, setEditingText] = useState('');
+// Стан для видимості форми додавання
+const [isFormVisible, setFormVisible] = useState(false);
 
 
   // Функція для відправки даних боту
-  const addFirstButton = useCallback(() => {
-    return (
-       <div className="form">
-      
-        <input className='buttonsText'
-          type="text"
-          placeholder="Текст для кнопки"
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-        />
-        
-        <button onClick={handleAddButton}>Додати</button>
-      </div>
-    );
-  }, [inputText]);
-
- 
+  const onSendData = useCallback(() => {
+    if (buttons.length === 0) {
+      tg.showAlert('Будь ласка, додайте хоча б одну кнопку.');
+      return;
+    }
+    const data = {
+      buttons: buttons.map(b => `${b.buttonIndex} - ${b.message}`),
+    };
+    tg.sendData(JSON.stringify(data));
+  }, [buttons]);
 
   useEffect(() => {
     // Повідомляємо Telegram, що Web App готовий
@@ -65,22 +60,25 @@ const [editingText, setEditingText] = useState('');
   }, []);
 
   useEffect(() => {
-    // Налаштовуємо головну кнопку Telegram
-    if (buttons.length >= 0) {
-      tg.MainButton.setText(`Додати кнопки`);
+    if (isFormVisible && buttons.length > 0) {
+      // Режим відправки даних
+      tg.MainButton.setText(`Відправити ${buttons.length} кнопки`);
       tg.MainButton.show();
+      tg.MainButton.onClick(onSendData);
     } else {
-      tg.MainButton.hide();
+      // Режим переходу до форми додавання
+      tg.MainButton.setText('Додати кнопку');
+      tg.MainButton.show();
+      tg.MainButton.onClick(() => setFormVisible(true));
     }
-
-    // Додаємо слухача події на головну кнопку
-    tg.onEvent('mainButtonClicked', addFirstButton);
 
     // Прибираємо слухача при демонтажі компонента або зміні onSendData
     return () => {
-      tg.offEvent('mainButtonClicked', addFirstButton);
+      // Важливо очистити обробник, щоб уникнути виклику старої функції
+      tg.MainButton.offClick(onSendData);
+      tg.MainButton.offClick(() => setFormVisible(true));
     };
-  }, [inputText, addFirstButton]);
+  }, [buttons, onSendData, isFormVisible]);
 
 
   const handleAddButton = async () => {
@@ -107,6 +105,8 @@ const [editingText, setEditingText] = useState('');
         // 2. Якщо дані успішно відправлено, оновлюємо стан у додатку
         setButtons((prev) => [...prev, newButton]);
         setInputText('');
+        // Ховаємо форму після успішного додавання
+        setFormVisible(false);
       } catch (error) {
         console.error('Не вдалося додати кнопку:', error);
         tg.showAlert('Сталася помилка при збереженні кнопки. Спробуйте ще раз.');
@@ -173,7 +173,21 @@ const [editingText, setEditingText] = useState('');
       <p className="user-info">
         Привіт, {tg.initDataUnsafe?.user?.first_name || 'користувач'}!
       </p>
-     
+      {isFormVisible && (
+        <div className="form">
+          <input
+            className="buttonsText"
+            type="text"
+            placeholder="Текст для кнопки"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+          />
+          <button onClick={handleAddButton}>Зберегти</button>
+          <button onClick={() => setFormVisible(false)} className="cancel-btn">
+            Скасувати
+          </button>
+        </div>
+      )}
       <div className="button-list">
         {buttons.map((button) => (
           <div key={button.id} className="button-item">

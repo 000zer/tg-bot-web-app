@@ -66,7 +66,7 @@ const [editingText, setEditingText] = useState('');
 
   useEffect(() => {
     // Налаштовуємо головну кнопку Telegram
-    if (buttons.length == 0) {
+    if (buttons.length >= 0) {
       tg.MainButton.setText(`Додати кнопки`);
       tg.MainButton.show();
     } else {

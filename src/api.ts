@@ -37,15 +37,20 @@ export const getButtons = async (): Promise<Button[]> => {
  * @param buttonData - Дані для нової кнопки.
  */
 export const addButton = async (buttonData: { buttonIndex: string; message: string }): Promise<Button> => {
-  const response = await fetch(baseUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(buttonData),
-  });
-  if (!response.ok) {
-    throw new Error('Помилка мережі або сервера при додаванні');
+  try {
+    const response = await fetch(baseUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buttonData),
+    });
+    if (!response.ok) {
+      throw new Error(`Помилка сервера: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Помилка при додаванні кнопки:', error);
+    throw new Error('Не вдалося додати кнопку. Перевірте з\'єднання.');
   }
-  return await response.json();
 };
 
 /**
@@ -53,15 +58,20 @@ export const addButton = async (buttonData: { buttonIndex: string; message: stri
  * @param button - Об'єкт кнопки з оновленими даними.
  */
 export const updateButton = async (button: Button): Promise<Button> => {
-  const response = await fetch(`${baseUrl}/${button.id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(button),
-  });
-  if (!response.ok) {
-    throw new Error('Помилка при оновленні');
+  try {
+    const response = await fetch(`${baseUrl}/${button.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(button),
+    });
+    if (!response.ok) {
+      throw new Error(`Помилка сервера: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Помилка при оновленні кнопки:', error);
+    throw new Error('Не вдалося оновити кнопку. Перевірте з\'єднання.');
   }
-  return await response.json();
 };
 
 /**
@@ -69,10 +79,15 @@ export const updateButton = async (button: Button): Promise<Button> => {
  * @param id - ID кнопки для видалення.
  */
 export const deleteButton = async (id: string): Promise<void> => {
-  const response = await fetch(`${baseUrl}/${id}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Помилка при видаленні на сервері');
+  try {
+    const response = await fetch(`${baseUrl}/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error(`Помилка сервера: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Помилка при видаленні кнопки:', error);
+    throw new Error('Не вдалося видалити кнопку. Перевірте з\'єднання.');
   }
 };

@@ -1,4 +1,4 @@
-import { AppBar, Container, TextField, Typography, Button, Box, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Stack } from '@mui/material';
+import { AppBar, Container, TextField, Typography, Button, Box, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Stack, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { useState, useEffect, useCallback } from 'react';
 import './App.css'; // Залишаємо, якщо є глобальні стилі або стилі, не покриті MUI
 import EditIcon from '@mui/icons-material/Edit';
@@ -14,15 +14,24 @@ import { type Button as ApiButtonType } from './api'; // Перейменову�
 const tg = (window as any).Telegram.WebApp;
 function App() {
   const [inputText, setInputText] = useState('');
-  const [inputName, setInputName] = useState('');
+  const [inputName, setInputName] = useState(''); // Це поле для тексту на кнопці
+  const [inputAction, setInputAction] = useState('send_message'); // Стан для обраної дії
   // Змінюємо стан для зберігання масиву об'єктів кнопок
   const [buttons, setButtons] = useState<ApiButtonType[]>([]); // Використовуємо перейменований тип
   // Стан для відстеження редагованої кнопки та її нового тексту
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState('');
-  const [editingText, setEditingText] = useState('');
+  const [editingName, setEditingName] = useState(''); // Текст на кнопці
+  const [editingText, setEditingText] = useState(''); // Повідомлення, що відправляється
+  const [editingAction, setEditingAction] = useState(''); // Дія, що редагується
   // Стан для видимості форми додавання
   const [isFormVisible, setFormVisible] = useState(false);
+
+  // Список доступних дій для кнопок
+  const availableActions = [
+    { id: 'send_message', label: 'Надіслати повідомлення' },
+    { id: 'show_alert', label: 'Показати сповіщення' },
+    { id: 'request_contact', label: 'Запитати контакт' },
+  ];
 
 
   useEffect(() => {
@@ -53,7 +62,7 @@ function App() {
     }
     const data = {
       // Надсилаємо масив об'єктів, а не просто рядки
-      buttons: buttons.map(b => ({ buttonName: b.buttonName, message: b.message })),
+      buttons: buttons.map(b => ({ buttonName: b.buttonName, message: b.message, action: b.action })),
     };
     tg.sendData(JSON.stringify(data));
   }, [buttons]);
@@ -81,14 +90,16 @@ function App() {
 
   const handleAddButton = async () => {
     const text = inputText.trim();
-    const name = inputName.trim(); // Простий спосіб нумерації
+    const name = inputName.trim();
+    const action = inputAction;
 
-    if (name !== '' && text !== '') {
+    if (name !== '' && text !== '' && action !== '') {
       try {
         // 1. Викликаємо функцію для додавання кнопки
-        const newButton = await addButton({ buttonName: name, message: text });
+        const newButton = await addButton({ buttonName: name, message: text, action: action });
         // 2. Якщо дані успішно відправлено, оновлюємо стан у додатку
         setButtons((prev) => [...prev, newButton]);
+        // Скидаємо поля форми
         setInputName('');
         setInputText('');
         // Ховаємо форму після успішного додавання
@@ -113,7 +124,8 @@ function App() {
   const handleEdit = (button: ApiButtonType) => { // Використовуємо перейменований тип
     setEditingId(button.id);
     setEditingName(button.buttonName);
-    setEditingText(button.message);
+    setEditingText(button.message); // Повідомлення, яке буде відправлено
+    setEditingAction(button.action);
   };
 
   // Функція для скасування редагування
@@ -121,12 +133,13 @@ function App() {
     setEditingId(null);
     setEditingName('');
     setEditingText('');
+    setEditingAction('');
   };
 
   // Функція для збереження змін
   const handleSaveEdit = async (buttonToUpdate: ApiButtonType) => { // Використовуємо перейменований тип
     try {
-      const updatedButtonData = { ...buttonToUpdate, buttonName: editingName, message: editingText };
+      const updatedButtonData = { ...buttonToUpdate, buttonName: editingName, message: editingText, action: editingAction };
       await updateButton(updatedButtonData); // Викликаємо функцію для оновлення
       // Оновлюємо локальний стан
       setButtons(buttons.map(b =>
@@ -153,8 +166,7 @@ function App() {
           {isFormVisible && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 2, border: '1px solid #ccc', borderRadius: '4px', mb: 2 }}>
               <TextField
-                // className="buttonsText" // Видаляємо кастомний клас
-                label="Текст для кнопки" // Додаємо label для кращого UX
+                label="Назва кнопки (що на ній написано)"
                 variant="outlined"
                 fullWidth
                 type="text"
@@ -162,23 +174,24 @@ function App() {
                 onChange={(e) => setInputName(e.target.value)}
               />
               <TextField
-                // className="buttonsText" // Видаляємо кастомний клас
-                label="Текст для кнопки" // Додаємо label для кращого UX
+                label="Повідомлення (що відправиться при натисканні)"
                 variant="outlined"
                 fullWidth
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
               />
-              {/* <TextField
-                // className="buttonsText" // Видаляємо кастомний клас
-                label="Текст для кнопки" // Додаємо label для кращого UX
-                variant="outlined"
-                fullWidth
-                type="text"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-              /> */}
+              <FormControl fullWidth>
+                <InputLabel id="action-select-label">Дія кнопки</InputLabel>
+                <Select
+                  labelId="action-select-label"
+                  value={inputAction}
+                  label="Дія кнопки"
+                  onChange={(e) => setInputAction(e.target.value)}
+                >
+                  {availableActions.map(action => <MenuItem key={action.id} value={action.id}>{action.label}</MenuItem>)}
+                </Select>
+              </FormControl>
               <Stack direction="row" spacing={2} justifyContent="flex-end"> {/* Використовуємо Stack для кнопок */}
                 <Button variant="contained" onClick={handleAddButton}>Зберегти</Button>
                 <Button variant="outlined" color="error" onClick={() => setFormVisible(false)}>
@@ -204,22 +217,37 @@ function App() {
                 {editingId === button.id ? (
                   // --- Режим редагування ---
                   <>
+                    <Stack spacing={1} sx={{ width: '100%', mr: 1 }}>
                     <TextField
                       variant="outlined"
                       size="small" // Робимо меншим для вбудованого редагування
+                      label="Назва кнопки"
                       type="text"
-                      value={editingText}
-                      onChange={(e) => setEditingText(e.target.value)}
-                      sx={{ flexGrow: 1, mr: 1 }} // Займає доступний простір
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
                     />
                      <TextField
                       variant="outlined"
                       size="small" // Робимо меншим для вбудованого редагування
+                      label="Повідомлення"
                       type="text"
-                      value={editingName}
-                      onChange={(e) => setEditingName(e.target.value)}
-                      sx={{ flexGrow: 1, mr: 1 }} // Займає доступний простір
+                      value={editingText}
+                      onChange={(e) => setEditingText(e.target.value)}
                     />
+                    <FormControl fullWidth size="small">
+                      <InputLabel id="edit-action-label">Дія</InputLabel>
+                      <Select
+                        labelId="edit-action-label"
+                        value={editingAction}
+                        label="Дія"
+                        onChange={(e) => setEditingAction(e.target.value)}
+                      >
+                        {availableActions.map(action => (
+                          <MenuItem key={action.id} value={action.id}>{action.label}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    </Stack>
                     <Stack direction="row" spacing={0.5}> {/* Використовуємо Stack для кнопок дій */}
                       <IconButton onClick={() => handleSaveEdit(button)} color="primary">
                         <DoneIcon />
@@ -232,8 +260,11 @@ function App() {
                 ) : (
                   // --- Режим перегляду ---
                   <>
-                    <ListItemText primary={button.message} sx={{ flexGrow: 1 }} /> {/* Використовуємо ListItemText */}
-                    <ListItemText primary={button.buttonName} sx={{ flexGrow: 1 }}/> {/* Розміщуємо дії праворуч */}
+                    <ListItemText 
+                      primary={button.buttonName} 
+                      secondary={`Дія: ${availableActions.find(a => a.id === button.action)?.label || 'Невідомо'}`} 
+                      sx={{ flexGrow: 1 }} 
+                    />
 
                     <ListItemSecondaryAction> {/* Розміщуємо дії праворуч */}
                       <Stack direction="row" spacing={0.5}>

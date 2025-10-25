@@ -11,6 +11,7 @@ export type Button = {
   id: string;
   buttonName: string;
   message: string;
+  action: string; // Нове поле для унікальної дії
 };
 
 /**
@@ -36,7 +37,7 @@ export const getButtons = async (): Promise<Button[]> => {
  * Додає нову кнопку на сервер.
  * @param buttonData - Дані для нової кнопки.
  */
-export const addButton = async (buttonData: { buttonName: string;message: string }): Promise<Button> => {
+export const addButton = async (buttonData: { buttonName: string; message: string; action: string }): Promise<Button> => {
   try {
     const response = await fetch(baseUrl, {
       method: 'POST',
